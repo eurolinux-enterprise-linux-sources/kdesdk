@@ -1,0 +1,11 @@
+--- a/kompare/komparepart/komparelistview.cpp	2009-10-02 13:51:40.000000000 +0530
++++ a/kompare/komparepart/komparelistview.cpp	2013-02-07 00:37:44.339688035 +0530
+@@ -661,7 +661,7 @@ 
+ 		if ( this == parent()->firstChild() )
+ 			p->drawLine( 0, 0, width, 0 );
+ 		if ( nextSibling() == 0 )
+-			p->drawLine( 0, height() - 1, width, height() - 1 );
++			p->drawLine( 0, height(), width, height() );
+ 	}
+ }
+ 

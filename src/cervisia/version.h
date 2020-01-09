@@ -1,0 +1,3 @@
+#ifndef CERVISIA_VERSION
+#define CERVISIA_VERSION "3.3.0"
+#endif // CERVISIA_VERSION

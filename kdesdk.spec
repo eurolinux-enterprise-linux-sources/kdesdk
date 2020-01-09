@@ -1,6 +1,6 @@
 Name: kdesdk
 Version: 4.3.4
-Release: 4%{?dist}
+Release: 9%{?dist}
 Summary: The KDE Software Development Kit (SDK)
 
 Group: User Interface/Desktops
@@ -11,6 +11,15 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # bz#587935 - lokalize has two entries in menu (edit)   
 Patch0: kdesdk-4.3.4-category.patch
+
+# bz#857002 - Reproducible segfault with Umbrello
+Patch1: kdesdk-4.3.4-umbrello-recursion.patch
+
+# discovered with bz#857002 - fix type punning in umbrello
+Patch2: kdesdk-4.3.4-umbrello-strict-aliasing.patch
+
+# fix underscore to be visible on last line
+Patch3: kdesdk-4.3.4-bz#908709.patch
 
 # upstream patches
 Patch100: kdesdk-4.3.4-kde#184055.patch.patch
@@ -32,7 +41,7 @@ BuildRequires: binutils-devel
 Requires: kdepimlibs >= %{version}
 Requires: %{name}-libs = %{version}-%{release}
 Requires: kross(python)
-Requires(hint): %{name}-utils = %{version}-%{release}
+Requires: %{name}-utils = %{version}-%{release}
 
 %description
 A collection of applications and tools used by developers, including:
@@ -77,6 +86,9 @@ xml2pot
 %setup -q
 
 %patch0 -p1 -b .category
+%patch1 -p1 -b .recursion
+%patch2 -p1 -b .strictalias
+%patch3 -p1 -b .bz#908709
 
 # upstream patches
 %patch100 -p4 -b kde#184055
@@ -229,6 +241,21 @@ fi
 
 
 %changelog
+* Fri Apr 11 2014 Than Ngo <than@redhat.com> - 4.3.4-9
+- Resolves: bz#908709, fix hides underscore characters
+
+* Tue Mar 18 2014 Martin Briza <mbriza@redhat.com> - 4.3.4-8
+- Resolves: bz#857002, Strict aliasing for rpmdiff for the whole umbrello binary
+
+* Tue Mar 18 2014 Martin Briza <mbriza@redhat.com> - 4.3.4-7
+- Resolves: bz#857002, Fix typo
+
+* Tue Mar 18 2014 Martin Briza <mbriza@redhat.com> - 4.3.4-6
+- Resolves: bz#857002, Fix type punning in umbrello, discovered in rpmdiff
+
+* Tue Mar 18 2014 Martin Briza <mbriza@redhat.com> - 4.3.4-5
+- Resolves: bz#857002, Reproducible segfault with Umbrello
+
 * Fri May 21 2010 Than Ngo <than@redhat.com> - 4.3.4-4
 - Resolves: bz#587935, lokalize has two entries in menu
 

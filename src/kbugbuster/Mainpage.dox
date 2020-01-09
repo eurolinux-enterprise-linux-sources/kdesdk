@@ -1,0 +1,8 @@
+/** @mainpage KBugBuster
+*
+* KBugBuster is a GUI front end for the KDE bug tracking system.
+* It allows the user to view and manipulate bug reports and provides a
+* variety of options for searching through reports.
+*
+* This package is part of KDE, and a component of the KDE SDK module.
+*/

@@ -1,0 +1,848 @@
+/* This file is part of KCachegrind.
+   Copyright (C) 2003 Josef Weidendorfer <Josef.Weidendorfer@gmx.de>
+
+   KCachegrind is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public
+   License as published by the Free Software Foundation, version 2.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.  If not, write to
+   the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.
+*/
+
+/*
+ * Source View
+ */
+
+#include "sourceview.h"
+
+#include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+
+#include <Qt3Support/Q3PopupMenu>
+
+#include "globalconfig.h"
+#include "sourceitem.h"
+
+
+//
+// SourceView
+//
+
+
+SourceView::SourceView(TraceItemView* parentView,
+                       QWidget* parent, const char* name)
+  : Q3ListView(parent, name), TraceItemView(parentView)
+{
+  _inSelectionUpdate = false;
+
+  _arrowLevels = 0;
+  _lowList.setSortLow(true);
+  _highList.setSortLow(false);
+
+  addColumn( tr( "#" ) );
+  addColumn( tr( "Cost" ) );
+  addColumn( tr( "Cost 2" ) );
+  addColumn( "" );
+  addColumn( tr( "Source (unknown)" ) );
+
+  setAllColumnsShowFocus(true);
+  setColumnAlignment(0, Qt::AlignRight);
+  setColumnAlignment(1, Qt::AlignRight);
+  setColumnAlignment(2, Qt::AlignRight);
+  setResizeMode(Q3ListView::LastColumn);
+
+  connect(this,
+          SIGNAL(contextMenuRequested(Q3ListViewItem*, const QPoint &, int)),
+          SLOT(context(Q3ListViewItem*, const QPoint &, int)));
+
+  connect(this,
+          SIGNAL(selectionChanged(Q3ListViewItem*)),
+          SLOT(selectedSlot(Q3ListViewItem*)));
+
+  connect(this,
+          SIGNAL(doubleClicked(Q3ListViewItem*)),
+          SLOT(activatedSlot(Q3ListViewItem*)));
+
+  connect(this,
+          SIGNAL(returnPressed(Q3ListViewItem*)),
+          SLOT(activatedSlot(Q3ListViewItem*)));
+
+  this->setWhatsThis( whatsThis());
+}
+
+void SourceView::paintEmptyArea( QPainter * p, const QRect & r)
+{
+  Q3ListView::paintEmptyArea(p, r);
+}
+
+
+QString SourceView::whatsThis() const
+{
+    return tr( "<b>Annotated Source</b>"
+		 "<p>The annotated source list shows the "
+		 "source lines of the current selected function "
+		 "together with (self) cost spent while executing the "
+		 "code of this source line. If there was a call "
+		 "in a source line, lines with details on the "
+		 "call happening are inserted into the source: "
+		 "the cost spent inside of the call, the "
+		 "number of calls happening, and the call destination.</p>"
+		 "<p>Select a inserted call information line to "
+		 "make the destination function current.</p>");
+}
+
+void SourceView::context(Q3ListViewItem* i, const QPoint & p, int c)
+{
+  Q3PopupMenu popup;
+
+  // Menu entry:
+  TraceLineCall* lc = i ? ((SourceItem*) i)->lineCall() : 0;
+  TraceLineJump* lj = i ? ((SourceItem*) i)->lineJump() : 0;
+  TraceFunction* f = lc ? lc->call()->called() : 0;
+  TraceLine* line = lj ? lj->lineTo() : 0;
+
+  if (f) {
+      popup.insertItem(tr("Go to '%1'").arg(GlobalConfig::shortenSymbol(f->prettyName())), 93);
+    popup.addSeparator();
+  }
+  else if (line) {
+      popup.insertItem(tr("Go to Line %1").arg(line->name()), 93);
+    popup.insertSeparator();
+  }
+
+  if ((c == 1) || (c == 2)) {
+    addEventTypeMenu(&popup);
+    popup.addSeparator();
+  }
+  addGoMenu(&popup);
+
+  int r = popup.exec(p);
+  if (r == 93) {
+    if (f) activated(f);
+    if (line) activated(line);
+  }
+}
+
+
+void SourceView::selectedSlot(Q3ListViewItem * i)
+{
+  if (!i) return;
+  // programatically selected items are not signalled
+  if (_inSelectionUpdate) return;
+
+  TraceLineCall* lc = ((SourceItem*) i)->lineCall();
+  TraceLineJump* lj = ((SourceItem*) i)->lineJump();
+
+  if (!lc && !lj) {
+      TraceLine* l = ((SourceItem*) i)->line();
+      if (l) {
+	  _selectedItem = l;
+	  selected(l);
+      }
+      return;
+  }
+
+  TraceFunction* f = lc ? lc->call()->called() : 0;
+  if (f) {
+      _selectedItem = f;
+      selected(f);
+  }
+  else {
+    TraceLine* line = lj ? lj->lineTo() : 0;
+    if (line) {
+	_selectedItem = line;
+	selected(line);
+    }
+  }
+}
+
+void SourceView::activatedSlot(Q3ListViewItem * i)
+{
+  if (!i) return;
+  TraceLineCall* lc = ((SourceItem*) i)->lineCall();
+  TraceLineJump* lj = ((SourceItem*) i)->lineJump();
+
+  if (!lc && !lj) {
+      TraceLine* l = ((SourceItem*) i)->line();
+      if (l) activated(l);
+      return;
+  }
+
+  TraceFunction* f = lc ? lc->call()->called() : 0;
+  if (f) activated(f);
+  else {
+    TraceLine* line = lj ? lj->lineTo() : 0;
+    if (line) activated(line);
+  }
+}
+
+CostItem* SourceView::canShow(CostItem* i)
+{
+  ProfileContext::Type t = i ? i->type() : ProfileContext::InvalidType;
+  TraceFunction* f = 0;
+
+  switch(t) {
+  case ProfileContext::Function:
+      f = (TraceFunction*) i;
+      break;
+
+  case ProfileContext::Instr:
+      f = ((TraceInstr*)i)->function();
+      select(i);
+      break;
+
+  case ProfileContext::Line:
+      f = ((TraceLine*)i)->functionSource()->function();
+      select(i);
+      break;
+
+  default:
+      break;
+  }
+
+  return f;
+}
+
+void SourceView::doUpdate(int changeType)
+{
+  // Special case ?
+  if (changeType == selectedItemChanged) {
+
+      if (!_selectedItem) {
+	  clearSelection();
+	  return;
+      }
+
+      TraceLine* sLine = 0;
+      if (_selectedItem->type() == ProfileContext::Line)
+	  sLine = (TraceLine*) _selectedItem;
+      if (_selectedItem->type() == ProfileContext::Instr)
+	  sLine = ((TraceInstr*)_selectedItem)->line();
+
+      SourceItem* si = (SourceItem*)Q3ListView::selectedItem();
+      if (si) {
+	  if (si->line() == sLine) return;
+	  if (si->lineCall() &&
+	      (si->lineCall()->call()->called() == _selectedItem)) return;
+      }
+
+      Q3ListViewItem *item, *item2;
+      for (item = firstChild();item;item = item->nextSibling()) {
+	  si = (SourceItem*)item;
+	  if (si->line() == sLine) {
+	      ensureItemVisible(item);
+              _inSelectionUpdate = true;
+	      setCurrentItem(item);
+              _inSelectionUpdate = false;
+	      break;
+	  }
+	  item2 = item->firstChild();
+	  for (;item2;item2 = item2->nextSibling()) {
+	      si = (SourceItem*)item2;
+	      if (!si->lineCall()) continue;
+	      if (si->lineCall()->call()->called() == _selectedItem) {
+		  ensureItemVisible(item2);
+                  _inSelectionUpdate = true;
+		  setCurrentItem(item2);
+                  _inSelectionUpdate = false;
+		  break;
+	      }
+	  }
+	  if (item2) break;
+      }
+      return;
+  }
+
+  if (changeType == groupTypeChanged) {
+    Q3ListViewItem *item, *item2;
+    for (item = firstChild();item;item = item->nextSibling())
+      for (item2 = item->firstChild();item2;item2 = item2->nextSibling())
+        ((SourceItem*)item2)->updateGroup();
+  }
+
+  refresh();
+}
+
+void SourceView::refresh()
+{
+  int originalPosition = verticalScrollBar()->value();
+  clear();
+  setColumnWidth(0, 20);
+  setColumnWidth(1, 50);
+  setColumnWidth(2, _eventType2 ? 50:0);
+  setColumnWidth(3, 0); // arrows, defaults to invisible
+  setSorting(0); // always reset to line number sort
+  if (_eventType)
+    setColumnText(1, _eventType->name());
+  if (_eventType2)
+    setColumnText(2, _eventType2->name());
+
+  _arrowLevels = 0;
+
+  if (!_data || !_activeItem) {
+    setColumnText(4, tr("(No Source)"));
+    return;
+  }
+
+  ProfileContext::Type t = _activeItem->type();
+  TraceFunction* f = 0;
+  if (t == ProfileContext::Function) f = (TraceFunction*) _activeItem;
+  if (t == ProfileContext::Instr) {
+    f = ((TraceInstr*)_activeItem)->function();
+    if (!_selectedItem) _selectedItem = _activeItem;
+  }
+  if (t == ProfileContext::Line) {
+    f = ((TraceLine*)_activeItem)->functionSource()->function();
+    if (!_selectedItem) _selectedItem = _activeItem;
+  }
+
+  if (!f) return;
+
+  // Allow resizing of column 2
+  setColumnWidthMode(2, Q3ListView::Maximum);
+
+  TraceFunctionSource* mainSF = f->sourceFile();
+
+  // skip first source if there is no debug info and there are more sources
+  // (this is for a bug in GCC 2.95.x giving unknown source for prologs)
+  if (mainSF &&
+      (mainSF->firstLineno() == 0) &&
+      (mainSF->lastLineno() == 0) &&
+      (f->sourceFiles().count()>1) ) {
+	  // skip
+  }
+  else
+      fillSourceFile(mainSF, 0);
+
+  TraceFunctionSource* sf;
+  int fileno = 1;
+  TraceFunctionSourceList l = f->sourceFiles();
+  for (sf=l.first();sf;sf=l.next(), fileno++)
+    if (sf != mainSF)
+      fillSourceFile(sf, fileno);
+
+  if (!_eventType2) {
+    setColumnWidthMode(2, Q3ListView::Manual);
+    setColumnWidth(2, 0);
+  }
+  // reset to the original position - this is useful when the view is refreshed just because we change between relative/absolute
+  verticalScrollBar()->setValue(originalPosition);
+}
+
+
+/* Helper for fillSourceList:
+ * search recursive for a file, starting from a base dir
+ * If found, returns true and <dir> is set to the file path.
+ */
+static bool searchFileRecursive(QString& dir, const QString& name)
+{
+  // we leave this in...
+  qDebug("Checking %s/%s", dir.ascii(), name.ascii());
+
+  if (QFile::exists(dir + '/' + name)) return true;
+
+  // check in subdirectories
+  QDir d(dir);
+  d.setFilter( QDir::Dirs | QDir::NoSymLinks );
+  d.setSorting( QDir::Unsorted );
+  QStringList subdirs = d.entryList();
+  QStringList::const_iterator it =subdirs.constBegin();
+  for(; it != subdirs.constEnd(); ++it ) {
+    if (*it == "." || *it == ".." || *it == "CVS") continue;
+
+    dir = d.filePath(*it);
+    if (searchFileRecursive(dir, name)) return true;
+  }
+  return false;
+}
+
+/* Search for a source file in different places.
+ * If found, returns true and <dir> is set to the file path.
+ */
+bool SourceView::searchFile(QString& dir,
+			    TraceFunctionSource* sf)
+{
+    QString name = sf->file()->shortName();
+
+    if (QDir::isAbsolutePath(dir)) {
+	if (QFile::exists(dir + '/' + name)) return true;
+    }
+    else {
+	/* Directory is relative. Check
+	 * - relative to cwd
+	 * - relative to path of data file
+	 */
+	QString base = QDir::currentPath() + '/' + dir;
+	if (QFile::exists(base + '/' + name)) {
+	    dir = base;
+	    return true;
+	}
+
+	TracePart* firstPart = _data->parts().first();
+	if (firstPart) {
+	    QFileInfo partFile(*firstPart->file());
+	    if (QFileInfo(partFile.absolutePath(), name).exists()) {
+		dir = partFile.absolutePath();
+		return true;
+	    }
+	}
+    }
+
+    QStringList list = GlobalConfig::sourceDirs(_data,
+						sf->function()->object());
+    QStringList::const_iterator it;
+    for ( it = list.constBegin(); it != list.constEnd(); ++it ) {
+        dir = *it;
+        if (searchFileRecursive(dir, name)) return true;
+    }
+
+    return false;
+}
+
+
+void SourceView::updateJumpArray(uint lineno, SourceItem* si,
+				 bool ignoreFrom, bool ignoreTo)
+{
+    TraceLineJump* lj;
+    uint lowLineno, highLineno;
+    int iEnd = -1, iStart = -1;
+
+    if (0) qDebug("updateJumpArray(line %d, jump to %s)",
+		  lineno,
+		  si->lineJump()
+		  ? si->lineJump()->lineTo()->name().ascii() : "?" );
+
+
+    lj=_lowList.current();
+    while(lj) {
+	lowLineno = lj->lineFrom()->lineno();
+	if (lj->lineTo()->lineno() < lowLineno)
+	    lowLineno = lj->lineTo()->lineno();
+
+	if (lowLineno > lineno) break;
+
+	if (ignoreFrom && (lowLineno < lj->lineTo()->lineno())) break;
+	if (ignoreTo && (lowLineno < lj->lineFrom()->lineno())) break;
+
+	if (si->lineJump() && (lj != si->lineJump())) break;
+
+	int asize = (int)_jump.size();
+#if 0
+	for(iStart=0;iStart<asize;iStart++)
+	    if (_jump[iStart] &&
+		(_jump[iStart]->lineTo() == lj->lineTo())) break;
+#else
+	iStart = asize;
+#endif
+
+	if (iStart == asize) {
+	    for(iStart=0;iStart<asize;iStart++)
+		if (_jump[iStart] == 0) break;
+
+	    if (iStart== asize) {
+		asize++;
+		_jump.resize(asize);
+		if (asize > _arrowLevels) _arrowLevels = asize;
+	    }
+
+	    if (0) qDebug(" start %d (%s to %s)",
+			  iStart,
+			  lj->lineFrom()->name().ascii(),
+			  lj->lineTo()->name().ascii());
+
+	    _jump[iStart] = lj;
+	}
+	lj=_lowList.next();
+    }
+
+    si->setJumpArray(_jump);
+
+    lj=_highList.current();
+    while(lj) {
+	highLineno = lj->lineFrom()->lineno();
+	if (lj->lineTo()->lineno() > highLineno) {
+	    highLineno = lj->lineTo()->lineno();
+	    if (ignoreTo) break;
+	}
+	else if (ignoreFrom) break;
+
+	if (highLineno > lineno) break;
+
+	for(iEnd=0;iEnd< (int)_jump.size();iEnd++)
+	    if (_jump[iEnd] == lj) break;
+	if (iEnd == (int)_jump.size()) {
+	    qDebug("LineView: no jump start for end at %x ?", highLineno);
+	    iEnd = -1;
+	}
+	lj=_highList.next();
+
+	if (0 && (iEnd>=0))
+	    qDebug(" end %d (%s to %s)",
+		   iEnd,
+		   _jump[iEnd]->lineFrom()->name().ascii(),
+		   _jump[iEnd]->lineTo()->name().ascii());
+
+	if (0 && lj) qDebug("next end: %s to %s",
+			    lj->lineFrom()->name().ascii(),
+			    lj->lineTo()->name().ascii());
+
+	if (highLineno > lineno)
+	    break;
+	else {
+	    if (iEnd>=0) _jump[iEnd] = 0;
+	    iEnd = -1;
+	}
+    }
+    if (iEnd>=0) _jump[iEnd] = 0;
+}
+
+
+/* If sourceList is empty we set the source file name into the header,
+ * else this code is of a inlined function, and we add "inlined from..."
+ */
+void SourceView::fillSourceFile(TraceFunctionSource* sf, int fileno)
+{
+  if (!sf) return;
+
+  if (0) qDebug("Selected Item %s",
+		_selectedItem ? _selectedItem->name().ascii() : "(none)");
+
+  TraceLineMap::Iterator lineIt, lineItEnd;
+  int nextCostLineno = 0, lastCostLineno = 0;
+
+  bool validSourceFile = (!sf->file()->name().isEmpty());
+
+  TraceLine* sLine = 0;
+  if (_selectedItem) {
+    if (_selectedItem->type() == ProfileContext::Line)
+      sLine = (TraceLine*) _selectedItem;
+    if (_selectedItem->type() == ProfileContext::Instr)
+      sLine = ((TraceInstr*)_selectedItem)->line();
+  }
+
+  if (validSourceFile) {
+      TraceLineMap* lineMap = sf->lineMap();
+      if (lineMap) {
+	  lineIt    = lineMap->begin();
+	  lineItEnd = lineMap->end();
+	  // get first line with cost of selected type
+	  while(lineIt != lineItEnd) {
+	    if (&(*lineIt) == sLine) break;
+	    if ((*lineIt).hasCost(_eventType)) break;
+	    if (_eventType2 && (*lineIt).hasCost(_eventType2)) break;
+	    ++lineIt;
+	  }
+
+	  nextCostLineno     = (lineIt == lineItEnd) ? 0 : (*lineIt).lineno();
+	  if (nextCostLineno<0) {
+	    qDebug() << "SourceView::fillSourceFile: Negative line number "
+			<< nextCostLineno;
+	    qDebug() << "  Function '" << sf->function()->name() << "'";
+	    qDebug() << "  File '" << sf->file()->name() << "'";
+	    nextCostLineno = 0;
+	  }
+
+      }
+
+      if (nextCostLineno == 0) {
+	  new SourceItem(this, this, fileno, 1, false,
+			 tr("There is no cost of current selected type associated"));
+	  new SourceItem(this, this, fileno, 2, false,
+			 tr("with any source line of this function in file"));
+	  new SourceItem(this, this, fileno, 3, false,
+			 QString("    '%1'").arg(sf->function()->prettyName()));
+	  new SourceItem(this, this, fileno, 4, false,
+			 tr("Thus, no annotated source can be shown."));
+	  return;
+      }
+  }
+
+  QString filename = sf->file()->shortName();
+  QString dir = sf->file()->directory();
+  if (!dir.isEmpty())
+    filename = dir + '/' + filename;
+
+  if (nextCostLineno>0) {
+      // we have debug info... search for source file
+      if (searchFile(dir, sf)) {
+	  filename = dir + '/' + sf->file()->shortName();
+	  // no need to search again
+	  sf->file()->setDirectory(dir);
+      }
+      else
+	  nextCostLineno = 0;
+  }
+
+  // do it here, because the source directory could have been set before
+  if (childCount()==0) {
+    setColumnText(4, validSourceFile ?
+                  tr("Source ('%1')").arg(filename) :
+                  tr("Source (unknown)"));
+  }
+  else {
+    new SourceItem(this, this, fileno, 0, true,
+                   validSourceFile ?
+                   tr("--- Inlined from '%1' ---").arg(filename) :
+                   tr("--- Inlined from unknown source ---"));
+  }
+
+  if (nextCostLineno == 0) {
+    new SourceItem(this, this, fileno, 1, false,
+                   tr("There is no source available for the following function:"));
+    new SourceItem(this, this, fileno, 2, false,
+                   QString("    '%1'").arg(sf->function()->prettyName()));
+    if (sf->file()->name().isEmpty()) {
+      new SourceItem(this, this, fileno, 3, false,
+                     tr("This is because no debug information is present."));
+      new SourceItem(this, this, fileno, 4, false,
+                     tr("Recompile source and redo the profile run."));
+      if (sf->function()->object()) {
+	new SourceItem(this, this, fileno, 5, false,
+                       tr("The function is located in this ELF object:"));
+	new SourceItem(this, this, fileno, 6, false,
+                       QString("    '%1'")
+                       .arg(sf->function()->object()->prettyName()));
+      }
+    }
+    else {
+      new SourceItem(this, this, fileno, 3, false,
+                     tr("This is because its source file cannot be found:"));
+      new SourceItem(this, this, fileno, 4, false,
+                     QString("    '%1'").arg(sf->file()->name()));
+      new SourceItem(this, this, fileno, 5, false,
+                     tr("Add the folder of this file to the source folder list."));
+      new SourceItem(this, this, fileno, 6, false,
+                     tr("The list can be found in the configuration dialog."));
+    }
+    return;
+  }
+
+
+  // initialisation for arrow drawing
+  // create sorted list of jumps (for jump arrows)
+  TraceLineMap::Iterator it = lineIt, nextIt;
+  _lowList.clear();
+  _highList.clear();
+  while(1) {
+
+      nextIt = it;
+      ++nextIt;
+      while(nextIt != lineItEnd) {
+	if (&(*nextIt) == sLine) break;
+	if ((*nextIt).hasCost(_eventType)) break;
+	if (_eventType2 && (*nextIt).hasCost(_eventType2)) break;
+	++nextIt;
+      }
+
+      TraceLineJumpList jlist = (*it).lineJumps();
+      TraceLineJump* lj;
+      for (lj=jlist.first();lj;lj=jlist.next()) {
+	  if (lj->executedCount()==0) continue;
+	  // skip jumps to next source line with cost
+	  //if (lj->lineTo() == &(*nextIt)) continue;
+
+	  _lowList.append(lj);
+	  _highList.append(lj);
+      }
+      it = nextIt;
+      if (it == lineItEnd) break;
+  }
+  _lowList.sort();
+  _highList.sort();
+  _lowList.first(); // iterators to list start
+  _highList.first();
+  _jump.resize(0);
+
+
+  char buf[256];
+  bool inside = false, skipLineWritten = true;
+  int readBytes;
+  int fileLineno = 0;
+  SubCost most = 0;
+
+  TraceLine* currLine;
+  SourceItem *si, *si2, *item = 0, *first = 0, *selected = 0;
+  QFile file(filename);
+  if (!file.open(QIODevice::ReadOnly)) return;
+  while (1) {
+    readBytes=file.readLine(buf, sizeof( buf ));
+    if (readBytes<=0) {
+      // for nice empty 4 lines after function with EOF
+      buf[0] = 0;
+    }
+
+    if (readBytes >= (int) sizeof( buf )) {
+      qDebug("%s:%d  Line too long\n",
+	     sf->file()->name().ascii(), fileLineno);
+    }
+    else if ((readBytes>0) && (buf[readBytes-1] == '\n'))
+      buf[readBytes-1] = 0;
+
+
+    // keep fileLineno inside [lastCostLineno;nextCostLineno]
+    fileLineno++;
+    if (fileLineno == nextCostLineno) {
+	currLine = &(*lineIt);
+
+	// get next line with cost of selected type
+	++lineIt;
+	while(lineIt != lineItEnd) {
+	  if (&(*lineIt) == sLine) break;
+	  if ((*lineIt).hasCost(_eventType)) break;
+	  if (_eventType2 && (*lineIt).hasCost(_eventType2)) break;
+	  ++lineIt;
+	}
+
+	lastCostLineno = nextCostLineno;
+	nextCostLineno = (lineIt == lineItEnd) ? 0 : (*lineIt).lineno();
+    }
+    else
+	currLine = 0;
+
+    // update inside
+    if (!inside) {
+	if (currLine) inside = true;
+    }
+    else {
+	if ( (fileLineno > lastCostLineno) &&
+	     ((nextCostLineno == 0) ||
+	      (fileLineno < nextCostLineno - GlobalConfig::noCostInside()) ))
+	    inside = false;
+    }
+
+    int context = GlobalConfig::context();
+
+    if ( ((lastCostLineno==0) || (fileLineno > lastCostLineno + context)) &&
+	 ((nextCostLineno==0) || (fileLineno < nextCostLineno - context))) {
+	if (lineIt == lineItEnd) break;
+
+	if (!skipLineWritten) {
+	    skipLineWritten = true;
+	    // a "skipping" line: print "..." instead of a line number
+	    strcpy(buf,"...");
+	}
+	else
+	    continue;
+    }
+    else
+	skipLineWritten = false;
+
+    si = new SourceItem(this, this,
+			fileno, fileLineno, inside, QString(buf),
+                        currLine);
+
+    if (!currLine) continue;
+
+    if (!selected && (currLine == sLine)) selected = si;
+    if (!first) first = si;
+
+    if (currLine->subCost(_eventType) > most) {
+      item = si;
+      most = currLine->subCost(_eventType);
+    }
+
+    si->setOpen(true);
+    TraceLineCallList list = currLine->lineCalls();
+    TraceLineCall* lc;
+    for (lc=list.first();lc;lc=list.next()) {
+	if ((lc->subCost(_eventType)==0) &&
+	    (lc->subCost(_eventType2)==0)) continue;
+
+      if (lc->subCost(_eventType) > most) {
+        item = si;
+        most = lc->subCost(_eventType);
+      }
+
+      si2 = new SourceItem(this, si, fileno, fileLineno, currLine, lc);
+
+      if (!selected && (lc->call()->called() == _selectedItem))
+	  selected = si2;
+    }
+
+    TraceLineJumpList jlist = currLine->lineJumps();
+    TraceLineJump* lj;
+    for (lj=jlist.first();lj;lj=jlist.next()) {
+	if (lj->executedCount()==0) continue;
+
+	new SourceItem(this, si, fileno, fileLineno, currLine, lj);
+    }
+  }
+
+  if (selected) item = selected;
+  if (item) first = item;
+  if (first) {
+      ensureItemVisible(first);
+      _inSelectionUpdate = true;
+      setCurrentItem(first);
+      _inSelectionUpdate = false;
+  }
+
+  file.close();
+
+  // for arrows: go down the list according to list sorting
+  sort();
+  Q3ListViewItem *item1, *item2;
+  for (item1=firstChild();item1;item1 = item1->nextSibling()) {
+      si = (SourceItem*)item1;
+      updateJumpArray(si->lineno(), si, true, false);
+
+      for (item2=item1->firstChild();item2;item2 = item2->nextSibling()) {
+	  si2 = (SourceItem*)item2;
+	  if (si2->lineJump())
+	      updateJumpArray(si->lineno(), si2, false, true);
+	  else
+	      si2->setJumpArray(_jump);
+      }
+  }
+
+  if (arrowLevels())
+      setColumnWidth(3, 10 + 6*arrowLevels() + itemMargin() * 2);
+  else
+      setColumnWidth(3, 0);
+}
+
+
+void SourceView::updateSourceItems()
+{
+    setColumnWidth(1, 50);
+    setColumnWidth(2, _eventType2 ? 50:0);
+    // Allow resizing of column 2
+    setColumnWidthMode(2, Q3ListView::Maximum);
+
+    if (_eventType)
+      setColumnText(1, _eventType->name());
+    if (_eventType2)
+      setColumnText(2, _eventType2->name());
+
+    SourceItem* si;
+    Q3ListViewItem* item  = firstChild();
+    for (;item;item = item->nextSibling()) {
+	si = (SourceItem*)item;
+	TraceLine* l = si->line();
+	if (!l) continue;
+
+	si->updateCost();
+
+	Q3ListViewItem *next, *i  = si->firstChild();
+	for (;i;i = next) {
+	    next = i->nextSibling();
+	    ((SourceItem*)i)->updateCost();
+	}
+    }
+
+    if (!_eventType2) {
+      setColumnWidthMode(2, Q3ListView::Manual);
+      setColumnWidth(2, 0);
+    }
+}
+
+#include "sourceview.moc"

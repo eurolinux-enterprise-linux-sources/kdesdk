@@ -1,0 +1,18 @@
+if( UNIX )
+  add_subdirectory(cervisia)
+endif( UNIX )
+add_subdirectory(kapptemplate)
+add_subdirectory(kbugbuster)
+add_subdirectory(kcachegrind)
+add_subdirectory(kmtrace)
+add_subdirectory(kompare)
+add_subdirectory(lokalize)
+add_subdirectory(poxml)
+add_subdirectory(scripts)
+
+if(LIBXSLT_FOUND AND LIBXML2_FOUND)
+  add_subdirectory(umbrello)
+endif(LIBXSLT_FOUND AND LIBXML2_FOUND)
+
+add_subdirectory(kate)
+add_subdirectory(kate-plugins)
