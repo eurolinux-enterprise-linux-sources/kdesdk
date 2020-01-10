@@ -1,7 +1,7 @@
 Name:    kdesdk
 Summary: The KDE Software Development Kit (SDK)
 Version: 4.10.5
-Release: 5%{?dist}
+Release: 6%{?dist}
 
 License: GPLv2+ and GFDL
 URL:     http://www.kde.org/
@@ -15,6 +15,7 @@ Source0: http://download.kde.org/%{stable}/%{version}/src/%{name}-%{version}.tar
 
 Patch0: kdesdk-4.10.5-remove-env-shebang.patch
 Patch1: kdesdk-kminspector-multilib.patch
+Patch2: kdesdk-4.10.5-fix-crash-with-invalid-selection.patch
 
 %if 0%{?fedora} || 0%{?rhel} > 6
 BuildRequires: antlr-static antlr-tool
@@ -277,6 +278,7 @@ Requires: %{name}-common = %{version}-%{release}
 
 %patch0 -p1 -b .remove-env-shebang
 %patch1 -p1 -b .multilib
+%patch2 -p1 -b .fix-crash-with-invalid-selection
 
 %build
 mkdir -p %{_target_platform}
@@ -723,6 +725,10 @@ fi
 
 
 %changelog
+* Thu Jul 24 2014 Jan Grulich <jgrulich@redhat.com> - 4.10.5-6
+- Fix crash on find or replace with an invalid selection
+  Resolves: bz#1064811
+
 * Wed Mar 05 2014 Than Ngo <than@redhat.com> - 4.10.5-5
 - fix several multilib issues
 

@@ -1,0 +1,36 @@
+diff --git a/okteta/kasten/controllers/view/replace/replacetool.cpp b/okteta/kasten/controllers/view/replace/replacetool.cpp
+index f83b27b..72675c7 100644
+--- a/okteta/kasten/controllers/view/replace/replacetool.cpp
++++ b/okteta/kasten/controllers/view/replace/replacetool.cpp
+@@ -142,6 +142,13 @@ void ReplaceTool::replace( KFindDirection direction, bool fromCursor, bool inSel
+     if( inSelection )
+     {
+         const Okteta::AddressRange selection = mByteArrayView->selection();
++        if( ! selection.isValid() )
++        {
++            // nothing selected, so skip any search and finish now
++            emit finished( false, 0 );
++            return;
++        }
++
+         mReplaceFirstIndex = selection.start();
+         mReplaceLastIndex =  selection.end();
+         startIndex = selection.start();
+diff --git a/okteta/kasten/controllers/view/search/searchtool.cpp b/okteta/kasten/controllers/view/search/searchtool.cpp
+index 1229a46..ebbe5b4 100644
+--- a/okteta/kasten/controllers/view/search/searchtool.cpp
++++ b/okteta/kasten/controllers/view/search/searchtool.cpp
+@@ -123,6 +123,13 @@ void SearchTool::search( KFindDirection direction, bool fromCursor, bool inSelec
+     if( inSelection )
+     {
+         const Okteta::AddressRange selection = mByteArrayView->selection();
++        if( ! selection.isValid() )
++        {
++            // nothing selected, so skip any search and finish now
++            emit dataNotFound();
++            return;
++        }
++
+         mSearchFirstIndex = selection.start();
+         mSearchLastIndex =  selection.end();
+     }
