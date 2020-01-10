@@ -1,7 +1,7 @@
 Name:    kdesdk
 Summary: The KDE Software Development Kit (SDK)
 Version: 4.10.5
-Release: 6%{?dist}
+Release: 8%{?dist}
 
 License: GPLv2+ and GFDL
 URL:     http://www.kde.org/
@@ -56,7 +56,7 @@ Requires: %{name}-scripts = %{version}-%{release}
 Requires: %{name}-strigi-analyzer = %{version}-%{release}
 Requires: %{name}-thumbnailers = %{version}-%{release}
 Requires: %{name}-umbrello = %{version}-%{release}
-# for upgrade path, when kate was split out 
+# for upgrade path, when kate was split out
 Requires: kate
 
 %description
@@ -83,7 +83,7 @@ Summary: Development files for %{name}
 Requires: %{name}-kmtrace-devel = %{version}-%{release}
 Requires: %{name}-kompare-devel = %{version}-%{release}
 Requires: %{name}-okteta-devel = %{version}-%{release}
-%description devel 
+%description devel
 %{summary}.
 
 %package cervisia
@@ -97,11 +97,11 @@ Requires: %{name}-kioslave = %{version}-%{release}
 %package dolphin-plugins
 Summary: Dolphin plugins
 Requires: %{name}-common = %{version}-%{release}
-%description dolphin-plugins 
+%description dolphin-plugins
 %{summary}.
 
 %package kapptemplate
-Summary: KDE Template generator 
+Summary: KDE Template generator
 Provides: kapptemplate = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
 requires: %{name}-kapptemplate-template = %{version}-%{release}
@@ -115,15 +115,16 @@ BuildArch: noarch
 %description kapptemplate-template
 %{summary}.
 
-%package kcachegrind 
-Summary: a browser for data provided by profiling tools (like cachegrind) 
+%package kcachegrind
+Summary: a browser for data provided by profiling tools (like cachegrind)
 Provides: kcachegrind = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
-%description kcachegrind 
+Requires: dbus-x11
+%description kcachegrind
 %{summary}.
 
 %package kioslave
-Summary: KIO slaves from %{name} 
+Summary: KIO slaves from %{name}
 Requires: %{name}-common = %{version}-%{release}
 %description kioslave
 %{summary}, including:
@@ -135,7 +136,7 @@ Summary: Assist with malloc debugging using glibc's "mtrace" functionality
 Provides: kmtrace = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
 Requires: %{name}-kmtrace-libs%{?_isa} = %{version}-%{release}
-%description kmtrace 
+%description kmtrace
 %{summary}.
 
 %package kmtrace-libs
@@ -152,33 +153,33 @@ Requires: %{name}-kmtrace-libs%{?_isa} = %{version}-%{release}
 %description kmtrace-devel
 %{summary}.
 
-%package kompare 
-Summary: Diff tool 
+%package kompare
+Summary: Diff tool
 Provides: kompare = %{version}-%{release}
 # when split occurred
 Obsoletes: kdesdk-libs < 4.6.95-10
 Requires: %{name}-common = %{version}-%{release}
 Requires: %{name}-kompare-libs%{?_isa} = %{version}-%{release}
-Requires: kate-part%{?_kde4_version: >= %{_kde4_version}}
+Requires: kate-part%{?_isa} >= 4.10.5
 Requires: diffutils
-%description kompare 
+%description kompare
 %{summary}.
 
 %package kompare-libs
-Summary: Runtime libraries for kompare 
+Summary: Runtime libraries for kompare
 Requires: %{name}-kompare = %{version}-%{release}
 %description kompare-libs
 %{summary}.
 
 %package kompare-devel
-Summary: Developer files for kompare 
+Summary: Developer files for kompare
 Provides: kompare-devel = %{version}-%{release}
 Requires: %{name}-kompare-libs%{?_isa} = %{version}-%{release}
 %description kompare-devel
 %{summary}.
 
 %package kpartloader
-Summary: KPart loader 
+Summary: KPart loader
 Requires: %{name}-common = %{version}-%{release}
 %description kpartloader
 %{summary}.
@@ -189,33 +190,33 @@ Requires: %{name}-common = %{version}-%{release}
 %description kstartperf
 %{summary}.
 
-%package kuiviewer 
-Summary: Displays designer UI files 
+%package kuiviewer
+Summary: Displays designer UI files
 Requires: %{name}-common = %{version}-%{release}
-%description kuiviewer 
+%description kuiviewer
 %{summary}.
 
-%package lokalize 
+%package lokalize
 Summary: Computer-aided translation system
 Provides: lokalize = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
 Requires: %{name}-strigi-analyzer = %{version}-%{release}
 Requires: kross(python)
-%description lokalize 
+%description lokalize
 %{summary}, focusing on productivity and performance.
 
-%package okteta 
-Summary: Binary/Hex editor 
+%package okteta
+Summary: Binary/Hex editor
 # okteta moved kdeutils -> kdesdk
 Conflicts: kdeutils < 6:4.5.80
 Provides: okteta = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
 Requires: %{name}-okteta-libs%{?_isa} = %{version}-%{release}
-%description okteta 
+%description okteta
 %{summary}.
 
 %package okteta-libs
-Summary: Runtime libraries for okteta 
+Summary: Runtime libraries for okteta
 Requires: %{name}-okteta = %{version}-%{release}
 %description okteta-libs
 %{summary}.
@@ -228,40 +229,40 @@ Requires: %{name}-okteta-libs%{?_isa} = %{version}-%{release}
 %{summary}.
 
 %package scripts
-Summary: KDE SDK scripts 
+Summary: KDE SDK scripts
 Requires: %{name}-common = %{version}-%{release}
 # optimizegraphics
 Requires: advancecomp
 Requires: optipng
 BuildArch: noarch
-%description scripts 
+%description scripts
 %{summary}.
 
-%package strigi-analyzer 
-Summary: Strigi anayzers from %{name} 
+%package strigi-analyzer
+Summary: Strigi anayzers from %{name}
 Requires: %{name}-common = %{version}-%{release}
-%description strigi-analyzer 
+%description strigi-analyzer
 %{summary}, including: diff, po, ts.
 
-%package poxml 
+%package poxml
 Summary: Text utilities from %{name}
 Requires: %{name}-common = %{version}-%{release}
 Obsoletes: kdesdk-utils < 4.6.95-10
 Provides:  kdesdk-utils = %{version}-%{release}
 %{?_qt4_version:Requires: qt4%{?_isa} >= %{_qt4_version}}
-%description poxml 
+%description poxml
 %{summary}, including
 po2xml
 split2po
 swappo
 xml2pot
 
-%package thumbnailers 
+%package thumbnailers
 Summary: Thumbnailers for KDE
-Obsoletes: kde-thumbnailer-po <= 2.0 
+Obsoletes: kde-thumbnailer-po <= 2.0
 Provides: kde-thumbnailer-po = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
-%description thumbnailers 
+%description thumbnailers
 %{summary}, including gnu gettext po translation files and
 gettext translation templates.
 
@@ -604,7 +605,7 @@ fi
 %{_kde4_includedir}/kasten*/
 %{_kde4_libdir}/libkasten*.so
 
-%files poxml 
+%files poxml
 %{_kde4_bindir}/po2xml
 %{_kde4_bindir}/split2po
 %{_kde4_bindir}/swappo
@@ -725,6 +726,14 @@ fi
 
 
 %changelog
+* Tue Sep 12 2017 Jan Grulich <jgrulich@redhat.com> - 4.10.5-8
+- Require kate-part >= 4.10.5 because kde4_version is 4.14.x
+  Resolves: bz#1317533
+
+* Fri Sep 08 2017 Jan Grulich <jgrulich@redhat.com> - 4.10.5-7
+- KCachegrind: add dependency on dbus-x11
+  Resolves: bz#1317533
+
 * Thu Jul 24 2014 Jan Grulich <jgrulich@redhat.com> - 4.10.5-6
 - Fix crash on find or replace with an invalid selection
   Resolves: bz#1064811
@@ -928,7 +937,7 @@ fi
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
 
 * Wed Feb 02 2011 Rex Dieter <rdieter@fedoraproject.org> 4.6.0-2
-- -devel: Obsoletes: kdeutils-devel 
+- -devel: Obsoletes: kdeutils-devel
 
 * Fri Jan 21 2011 Jaroslav Reznik <jreznik@redhat.com> 4.6.0-1
 - 4.6.0
@@ -981,7 +990,7 @@ fi
 
 * Mon Jun 07 2010 Jaroslav Reznik <jreznik@redhat.com> - 4.4.85-1
 - 4.5 Beta 2 (4.4.85)
-- Requires: advancecomp, optipng (for optimizegraphics) 
+- Requires: advancecomp, optipng (for optimizegraphics)
 
 * Fri May 21 2010 Jaroslav Reznik <jreznik@redhat.com> - 4.4.80-1
 - 4.5 Beta 1 (4.4.80)
@@ -1091,7 +1100,7 @@ fi
 - 4.2.0
 
 * Mon Jan 19 2009 Than Ngo <than@redhat.com> - 4.1.96-4
-- apply patch to fix  build against Boost 1.37.0 
+- apply patch to fix  build against Boost 1.37.0
 
 * Tue Jan 13 2009 Kevin Kofler <Kevin@tigcc.ticalc.org> 4.1.96-3
 - F11+: add workaround to fix build against Boost 1.37.0
