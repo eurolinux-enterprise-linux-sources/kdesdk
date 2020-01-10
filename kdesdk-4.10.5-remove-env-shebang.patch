@@ -1,0 +1,180 @@
+diff -upr kdesdk-4.10.5/kcachegrind/converters/hotshot2calltree kdesdk-4.10.5_fixed/kcachegrind/converters/hotshot2calltree
+--- kdesdk-4.10.5/kcachegrind/converters/hotshot2calltree	2013-06-28 20:03:04.840858450 +0200
++++ kdesdk-4.10.5_fixed/kcachegrind/converters/hotshot2calltree	2014-01-13 10:40:38.600365387 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python
+ # _*_ coding: latin1 _*_
+ 
+ #
+diff -upr kdesdk-4.10.5/kcachegrind/converters/pprof2calltree kdesdk-4.10.5_fixed/kcachegrind/converters/pprof2calltree
+--- kdesdk-4.10.5/kcachegrind/converters/pprof2calltree	2013-06-28 20:03:04.841858487 +0200
++++ kdesdk-4.10.5_fixed/kcachegrind/converters/pprof2calltree	2014-01-13 10:40:38.601365390 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env php
++#!/usr/bin/php
+ # Redistribution and use in source and binary forms, with or without
+ # modification, are permitted provided that the following conditions are met:
+ #
+diff -upr kdesdk-4.10.5/kde-dev-scripts/colorcvs kdesdk-4.10.5_fixed/kde-dev-scripts/colorcvs
+--- kdesdk-4.10.5/kde-dev-scripts/colorcvs	2013-06-28 20:03:13.463177836 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/colorcvs	2014-01-13 10:40:38.646365516 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ # colorcvs
+ #
+diff -upr kdesdk-4.10.5/kde-dev-scripts/colorsvn kdesdk-4.10.5_fixed/kde-dev-scripts/colorsvn
+--- kdesdk-4.10.5/kde-dev-scripts/colorsvn	2013-06-28 20:03:13.463177836 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/colorsvn	2014-01-13 10:40:38.620365444 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ # colorsvn
+ #
+diff -upr kdesdk-4.10.5/kde-dev-scripts/cvsblame kdesdk-4.10.5_fixed/kde-dev-scripts/cvsblame
+--- kdesdk-4.10.5/kde-dev-scripts/cvsblame	2013-06-28 20:03:13.464177873 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/cvsblame	2014-01-13 10:40:38.623365452 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ # cvs blame inspired by Bonsai
+ # Author: Bernd Gehrmann <bernd@physik.hu-berlin.de>
+diff -upr kdesdk-4.10.5/kde-dev-scripts/cvs-clean kdesdk-4.10.5_fixed/kde-dev-scripts/cvs-clean
+--- kdesdk-4.10.5/kde-dev-scripts/cvs-clean	2013-06-28 20:03:13.464177873 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/cvs-clean	2014-01-13 10:40:38.634365483 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ #
+ # This script recursively (beginning with the current directory)
+diff -upr kdesdk-4.10.5/kde-dev-scripts/cvscheck kdesdk-4.10.5_fixed/kde-dev-scripts/cvscheck
+--- kdesdk-4.10.5/kde-dev-scripts/cvscheck	2013-06-28 20:03:13.464177873 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/cvscheck	2014-01-13 10:40:38.607365407 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ use POSIX qw(mktime ctime);
+ use Time::Local qw( timegm );
+diff -upr kdesdk-4.10.5/kde-dev-scripts/cvslastchange kdesdk-4.10.5_fixed/kde-dev-scripts/cvslastchange
+--- kdesdk-4.10.5/kde-dev-scripts/cvslastchange	2013-06-28 20:03:13.464177873 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/cvslastchange	2014-01-13 10:40:38.621365446 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ use File::Basename;
+ 
+diff -upr kdesdk-4.10.5/kde-dev-scripts/extend_dmalloc kdesdk-4.10.5_fixed/kde-dev-scripts/extend_dmalloc
+--- kdesdk-4.10.5/kde-dev-scripts/extend_dmalloc	2013-06-28 20:03:13.465177910 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/extend_dmalloc	2014-01-13 10:40:38.604365399 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ #
+ # script to run gdb on return-addresses
+ # Usage: $0 malloc-log-file binary
+diff -upr kdesdk-4.10.5/kde-dev-scripts/extractattr kdesdk-4.10.5_fixed/kde-dev-scripts/extractattr
+--- kdesdk-4.10.5/kde-dev-scripts/extractattr	2013-06-28 20:03:13.465177910 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/extractattr	2014-01-13 10:40:38.667365575 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ #
+ # Copyright (c) 2004 Richard Evans <rich@ridas.com>
+diff -upr kdesdk-4.10.5/kde-dev-scripts/extractrc kdesdk-4.10.5_fixed/kde-dev-scripts/extractrc
+--- kdesdk-4.10.5/kde-dev-scripts/extractrc	2013-06-28 20:03:13.487178726 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/extractrc	2014-01-13 10:40:38.648365522 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ ### TODO: other copyrights, license?
+ # Copyright (c) 2004 Richard Evans <rich@ridas.com>
+diff -upr kdesdk-4.10.5/kde-dev-scripts/includemocs kdesdk-4.10.5_fixed/kde-dev-scripts/includemocs
+--- kdesdk-4.10.5/kde-dev-scripts/includemocs	2013-06-28 20:03:13.466177948 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/includemocs	2014-01-13 10:40:38.628365466 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ use strict;
+ use Cwd;
+diff -upr kdesdk-4.10.5/kde-dev-scripts/kde_generate_export_header kdesdk-4.10.5_fixed/kde-dev-scripts/kde_generate_export_header
+--- kdesdk-4.10.5/kde-dev-scripts/kde_generate_export_header	2013-06-28 20:03:13.471178133 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/kde_generate_export_header	2014-01-13 10:40:38.629365469 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env python
++#! /usr/bin/python
+ 
+ import os, sys, string
+ 
+diff -upr kdesdk-4.10.5/kde-dev-scripts/kdelnk2desktop.py kdesdk-4.10.5_fixed/kde-dev-scripts/kdelnk2desktop.py
+--- kdesdk-4.10.5/kde-dev-scripts/kdelnk2desktop.py	2013-06-28 20:03:13.472178170 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/kdelnk2desktop.py	2014-01-13 10:40:38.639365497 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env python
++#! /usr/bin/python
+ 
+ import os, sys, string
+ 
+diff -upr kdesdk-4.10.5/kde-dev-scripts/kdemangen.pl kdesdk-4.10.5_fixed/kde-dev-scripts/kdemangen.pl
+--- kdesdk-4.10.5/kde-dev-scripts/kdemangen.pl	2013-06-28 20:03:13.472178170 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/kdemangen.pl	2014-01-13 10:40:38.636365488 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ # kdemangen.pl
+ # Copyright (C)  2003  Dominique Devriese <devriese@kde.org>
+diff -upr kdesdk-4.10.5/kde-dev-scripts/kde-systemsettings-tree.py kdesdk-4.10.5_fixed/kde-dev-scripts/kde-systemsettings-tree.py
+--- kdesdk-4.10.5/kde-dev-scripts/kde-systemsettings-tree.py	2013-06-28 20:03:13.471178133 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/kde-systemsettings-tree.py	2014-01-13 10:40:38.633365480 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python
+ 
+ # A small script that validates the structure of systemsettings.
+ #
+diff -upr kdesdk-4.10.5/kde-dev-scripts/noncvslist kdesdk-4.10.5_fixed/kde-dev-scripts/noncvslist
+--- kdesdk-4.10.5/kde-dev-scripts/noncvslist	2013-06-28 20:03:13.473178207 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/noncvslist	2014-01-13 10:40:38.650365528 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ # Offline check for extra in a checked-out
+ # CVS module. Sirtaj Singh Kang <taj@kde.org> May 2000.
+diff -upr kdesdk-4.10.5/kde-dev-scripts/svn-clean kdesdk-4.10.5_fixed/kde-dev-scripts/svn-clean
+--- kdesdk-4.10.5/kde-dev-scripts/svn-clean	2013-06-28 20:03:13.476178318 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/svn-clean	2014-01-13 10:40:38.641365502 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env perl
++#! /usr/bin/perl
+ 
+ #
+ # This script recursively (beginning with the current directory)
+diff -upr kdesdk-4.10.5/kde-dev-scripts/svnlastchange kdesdk-4.10.5_fixed/kde-dev-scripts/svnlastchange
+--- kdesdk-4.10.5/kde-dev-scripts/svnlastchange	2013-06-28 20:03:13.477178356 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/svnlastchange	2014-01-13 10:40:38.609365413 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env perl
++#!/usr/bin/perl
+ #
+ # This file is Copyright (C) 2005 Thiago Macieira <thiago@kde.org>
+ # 
+diff -upr kdesdk-4.10.5/kde-dev-scripts/zonetab2pot.py kdesdk-4.10.5_fixed/kde-dev-scripts/zonetab2pot.py
+--- kdesdk-4.10.5/kde-dev-scripts/zonetab2pot.py	2013-06-28 20:03:13.477178356 +0200
++++ kdesdk-4.10.5_fixed/kde-dev-scripts/zonetab2pot.py	2014-01-13 10:40:38.630365471 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python
+ '''This script reads timezone list as its first argument
+ or from /usr/share/zoneinfo/zone.tab, and converts it
+ to a PO file template.

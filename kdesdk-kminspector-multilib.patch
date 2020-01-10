@@ -1,0 +1,18 @@
+diff -up kdesdk-4.10.5/kde-dev-utils/kmtrace/kminspector.cmake.than kdesdk-4.10.5/kde-dev-utils/kmtrace/kminspector.cmake
+--- kdesdk-4.10.5/kde-dev-utils/kmtrace/kminspector.cmake.than	2014-03-05 16:39:43.895889440 +0100
++++ kdesdk-4.10.5/kde-dev-utils/kmtrace/kminspector.cmake	2014-03-05 16:37:31.661889107 +0100
+@@ -1,8 +1,13 @@
+ #! /bin/sh
+ 
++arch=`uname -i`
++case "$arch" in
++  x86_64|s390x|ppc64|aarch64) libprefix="64" ;;
++  *) libprefix="" ;;
++esac
+ export MALLOC_TREE=kminspector.tree
+ export MALLOC_THRESHOLD=2000
+-export LD_PRELOAD=${LIB_INSTALL_DIR}/libktrace.so
++export LD_PRELOAD=/usr/lib$libprefix/libktrace.so
+ 
+ $*
+ 

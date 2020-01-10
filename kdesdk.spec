@@ -1,7 +1,7 @@
 Name:    kdesdk
 Summary: The KDE Software Development Kit (SDK)
 Version: 4.10.5
-Release: 1%{?dist}
+Release: 5%{?dist}
 
 License: GPLv2+ and GFDL
 URL:     http://www.kde.org/
@@ -12,6 +12,9 @@ URL:     http://www.kde.org/
 %global stable stable
 %endif
 Source0: http://download.kde.org/%{stable}/%{version}/src/%{name}-%{version}.tar.xz
+
+Patch0: kdesdk-4.10.5-remove-env-shebang.patch
+Patch1: kdesdk-kminspector-multilib.patch
 
 %if 0%{?fedora} || 0%{?rhel} > 6
 BuildRequires: antlr-static antlr-tool
@@ -100,7 +103,15 @@ Requires: %{name}-common = %{version}-%{release}
 Summary: KDE Template generator 
 Provides: kapptemplate = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
+requires: %{name}-kapptemplate-template = %{version}-%{release}
 %description kapptemplate
+%{summary}.
+
+%package kapptemplate-template
+Summary: KDE Templates
+Requires: %{name}-common = %{version}-%{release}
+BuildArch: noarch
+%description kapptemplate-template
 %{summary}.
 
 %package kcachegrind 
@@ -264,6 +275,8 @@ Requires: %{name}-common = %{version}-%{release}
 %prep
 %setup -q -n kdesdk-%{version}
 
+%patch0 -p1 -b .remove-env-shebang
+%patch1 -p1 -b .multilib
 
 %build
 mkdir -p %{_target_platform}
@@ -291,6 +304,15 @@ make install/fast DESTDIR=%{buildroot} -C %{_target_platform}
 # kdesdk does not understand lib64.
 rm -f %{buildroot}%{_kde4_bindir}/krazy-licensecheck
 
+# fix documentation multilib conflict
+for f in cervisia kcachegrind okteta umbrello ; do
+  if [ -f %{buildroot}%{_kde4_docdir}/HTML/en/$f/index.cache.bz2 ] ; then
+    bunzip2 %{buildroot}%{_kde4_docdir}/HTML/en/$f/index.cache.bz2
+    sed -i -e 's!<a name="id[a-z]*[0-9]*"></a>!!g' %{buildroot}%{_kde4_docdir}/HTML/en/$f/index.cache
+    sed -i -e 's!.html#id[a-z]*[0-9]*"!.html"!g' %{buildroot}%{_kde4_docdir}/HTML/en/$f/index.cache
+    bzip2 -9 %{buildroot}%{_kde4_docdir}/HTML/en/$f/index.cache
+  fi
+done
 
 %files
 
@@ -361,10 +383,12 @@ fi
 
 %files kapptemplate -f kapptemplate.lang
 %{_kde4_bindir}/kapptemplate
-%{_kde4_appsdir}/kdevappwizard/
 %{_kde4_datadir}/applications/kde4/kapptemplate.desktop
 %{_kde4_datadir}/config.kcfg/kapptemplate.*
 %{_kde4_iconsdir}/hicolor/*/apps/kapptemplate.*
+
+%files kapptemplate-template
+%{_kde4_appsdir}/kdevappwizard/
 
 %post kcachegrind
 touch --no-create %{_kde4_iconsdir}/hicolor &> /dev/null ||:
@@ -699,6 +723,18 @@ fi
 
 
 %changelog
+* Wed Mar 05 2014 Than Ngo <than@redhat.com> - 4.10.5-5
+- fix several multilib issues
+
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 4.10.5-4
+- Mass rebuild 2014-01-24
+
+* Mon Jan 13 2014 Jan Grulich <jgrulich@redhat.com> - 4.10.5-3
+- Do not use shebang with env (#987073)
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 4.10.5-2
+- Mass rebuild 2013-12-27
+
 * Sun Jun 30 2013 Than Ngo <than@redhat.com> - 4.10.5-1
 - 4.10.5
 
